@@ -1,0 +1,100 @@
+const dotenv = require('dotenv')
+dotenv.config()
+const express = require('express');
+const app = new express();
+
+app.use(express.static('client'))
+
+const cors_app = require('cors');
+app.use(cors_app());
+
+function getNLUInstance(){
+    let API_KEY = process.env.API_KEY
+    let API_URL = process.env.API_URL
+
+    const NLUV1 = require('ibm-watson/natural-language-understanding/v1')
+    const {IamAuthenticator} = require('ibm-watson/auth')
+    const NLU = new NLUV1({
+        version: '2020-08-01', 
+        authenticator: new IamAuthenticator({apikey: API_KEY,}),
+        serviceUrl: API_URL,
+    })
+    return NLU
+}
+
+app.get("/",(req,res)=>{
+    res.render('index.html');
+  });
+
+app.get("/url/emotion", (req,res) => {
+    let params = {
+        url: req.query.url,
+        features: {
+            emotion: {
+                targets: ["people", "animals"]
+            }
+        }
+    }
+    getNLUInstance().analyze(params)
+    .then(result => {
+        return res.send(result)
+    })
+    .catch(err => {
+        console.log('error', err)
+    })
+});
+
+app.get("/url/sentiment", (req,res) => {
+    let params = {
+        url: req.query.url,
+        features: {
+            sentiment: {
+                targets: ["people", "animals"]
+            }
+        }
+    }
+    getNLUInstance().analyze(params)
+    .then(result => {
+        return res.send(result)
+    })
+    .catch(err => console.log("error", err))
+});
+
+app.get("/text/emotion", (req,res) => {
+    let params = {
+       text: req.query.text,
+       features: {
+           emotion: {
+               targets: ["people", "animals"]
+           }
+       }
+    }
+    getNLUInstance().analyze(params)
+    .then(result => {
+        return res.send(result);
+    })
+    .catch(err => {
+        console.log('error', err)
+    })
+});
+
+app.get("/text/sentiment", (req,res) => {
+    let params = {
+        text: req.query.text,
+        features: {
+            sentiment: {
+                targets: ["people", "animals"]
+            }
+        }
+    }
+    getNLUInstance().analyze(params)
+    .then(result => {
+        return res.send(result)
+    })
+    .catch(err => console.log("error", err))
+});
+
+let server = app.listen(8080, () => {
+    console.log('Listening', server.address().port)
+})
+
